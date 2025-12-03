@@ -7,10 +7,15 @@ FPS = 120
 CUR_DIR = dirname(__file__)
 BG_IMG = join(CUR_DIR,"sprites","background-day.png")
 FLOOR_IMG = join(CUR_DIR,"sprites","base.png")
+PLAYER_IMG = join(CUR_DIR,"sprites","redbird-midflap.png")
 
 class Player:
     def __init__(self):
-        pass
+        self.bird_surface = pygame.image.load(PLAYER_IMG).convert()
+        self.bird_surface = pygame.transform.scale2x(self.bird_surface)
+        self.bird_rect = self.bird_surface.get_rect(center=(100,HEIGHT//2))
+    def draw(self,surface):
+        surface.blit(self.bird_surface,self.bird_rect)
 
 class Background:
     def __init__(self):
@@ -35,6 +40,7 @@ class Game:
         self.screen = pygame.display.set_mode((576,900))
         self.clock = pygame.time.Clock()
         self.bg = Background()
+        self.player = Player()
     def run(self)->None:
         while True:
             for event in pygame.event.get():
@@ -43,6 +49,7 @@ class Game:
                     os.kill(os.getpid(),signal.SIGTERM)
             self.bg.update()
             self.bg.draw(self.screen)
+            self.player.draw(self.screen)
             pygame.display.update()
             self.clock.tick(FPS)
 
