@@ -1,9 +1,12 @@
 import pygame,os,sys,signal
 from tkinter.messagebox import showerror,showwarning
 from os.path import join,dirname,isfile
+#global GRAVITY,PLAYER_MOVEMENT
+print("game starts")
 WIDTH = 576 
 HEIGHT = 1024
 FPS = 120
+GRAVITY = 0.24
 CUR_DIR = dirname(__file__)
 BG_IMG = join(CUR_DIR,"sprites","background-day.png")
 FLOOR_IMG = join(CUR_DIR,"sprites","base.png")
@@ -11,9 +14,13 @@ PLAYER_IMG = join(CUR_DIR,"sprites","redbird-midflap.png")
 
 class Player:
     def __init__(self):
+        self.bird_movement = 0
         self.bird_surface = pygame.image.load(PLAYER_IMG).convert()
         self.bird_surface = pygame.transform.scale2x(self.bird_surface)
         self.bird_rect = self.bird_surface.get_rect(center=(100,HEIGHT//2))
+    def update(self):
+        self.bird_movement += GRAVITY
+        self.bird_rect.centery += self.bird_movement
     def draw(self,surface):
         surface.blit(self.bird_surface,self.bird_rect)
 
@@ -49,6 +56,7 @@ class Game:
                     os.kill(os.getpid(),signal.SIGTERM)
             self.bg.update()
             self.bg.draw(self.screen)
+            self.player.update()
             self.player.draw(self.screen)
             pygame.display.update()
             self.clock.tick(FPS)
