@@ -5,7 +5,7 @@ from os.path import join,dirname,isfile
 print("game starts")
 WIDTH = 576 
 HEIGHT = 1024
-FPS = 120
+FPS = 130
 GRAVITY = 0.24
 CUR_DIR = dirname(__file__)
 BG_IMG = join(CUR_DIR,"sprites","background-day.png")
@@ -54,6 +54,10 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     os.kill(os.getpid(),signal.SIGTERM)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.player.bird_movement = 0
+                        self.player.bird_movement -=12
             self.bg.update()
             self.bg.draw(self.screen)
             self.player.update()
