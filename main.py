@@ -11,6 +11,7 @@ CUR_DIR = dirname(__file__)
 BG_IMG = join(CUR_DIR,"sprites","background-day.png")
 FLOOR_IMG = join(CUR_DIR,"sprites","base.png")
 PLAYER_IMG = join(CUR_DIR,"sprites","redbird-midflap.png")
+OBS_IMG = join(CUR_DIR,"sprites","pipe-green.png")
 
 class Player:
     def __init__(self):
@@ -23,7 +24,12 @@ class Player:
         self.bird_rect.centery += self.bird_movement
     def draw(self,surface):
         surface.blit(self.bird_surface,self.bird_rect)
-
+class Pipes:
+    def __init__(self):
+        self.pipe_surface = pygame.image.load(OBS_IMG).convert()
+        self.pipe_surface = pygame.transform.scale2x(self.pipe_surface)
+        self.pipe_lst = []
+        
 class Background:
     def __init__(self):
         self.bg_surface = pygame.image.load(BG_IMG).convert()
