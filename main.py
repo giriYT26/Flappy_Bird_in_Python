@@ -1,6 +1,7 @@
 import pygame,os,sys,signal
 from tkinter.messagebox import showerror,showwarning
 from os.path import join,dirname,isfile
+from random import choice
 #global GRAVITY,PLAYER_MOVEMENT
 print("game starts")
 WIDTH = 576 
@@ -29,12 +30,15 @@ class Pipes:
         self.pipe_surface = pygame.image.load(OBS_IMG).convert()
         self.pipe_surface = pygame.transform.scale2x(self.pipe_surface)
         self.pipe_lst = []
+        self.pipe_height = [400,600,610,500] #all the possible height for the pipe
         #Spawn pipe on a time interval of 1200ms (2.1sec)
         self.spawnpipe = pygame.USEREVENT #creating a user event 
         pygame.time.set_timer(self.spawnpipe,1200) # user event triger by time for every 2.1sec
     def create_pipe(self) :
-        self.new_pipe = self.pipe_surface.get_rect(midtop=(700,512)) #700,512
-        return self.new_pipe
+        random_pipe_height = choice(self.pipe_height)
+        self.bottom_pipe = self.pipe_surface.get_rect(midtop=(700,random_pipe_height)) #700,512
+        self.top_pipe = self.pipe_surface.get_rect(midbottom=(700,random_pipe_height-300))
+        return self.bottom_pipe,self.top_pipe
     
     def move_pipes(self):
         """Move the pipes to left"""
@@ -44,7 +48,11 @@ class Pipes:
     
     def draw(self,surface):
         for pipe in self.pipe_lst:
-            surface.blit(self.pipe_surface,pipe)
+            if pipe.bottom >= 1028:
+                surface.blit(self.pipe_surface,pipe)
+            else:
+                filp_pipe = pygame.transform.flip(self.pipe_surface,False,True)
+                surface.blit(filp_pipe,pipe)
         
 class Background:
     def __init__(self):
@@ -79,11 +87,11 @@ class Game:
                     pygame.quit()
                     os.kill(os.getpid(),signal.SIGTERM)
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                         self.player.bird_movement = 0
                         self.player.bird_movement -=12
                 if event.type == self.pipe.spawnpipe :
-                    self.pipe.pipe_lst.append(self.pipe.create_pipe())
+                    self.pipe.pipe_lst.extend(self.pipe.create_pipe())
                     #print(self.pipe.pipe_lst)
             #background 
             self.bg.update()
