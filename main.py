@@ -6,18 +6,23 @@ from random import choice
 #print("game starts")
 WIDTH = 576 
 HEIGHT = 1024
-FPS = 60 #130
+FPS = 90 #const 60 fps not 130
 GRAVITY = 0.24
 PLY_MOV = 0
 CUR_DIR = dirname(__file__)
+#print(CUR_DIR)
 BG_IMG = join(CUR_DIR,"sprites","background-day.png")
 FLOOR_IMG = join(CUR_DIR,"sprites","base.png")
 OBS_IMG = join(CUR_DIR,"sprites","pipe-green.png")
+GAME_OVER_IMG_PATH = join(CUR_DIR,"sprites","gameover.png")
+TRY_AGAIN_IMG_PATH = join(CUR_DIR,"sprites","Try_Again.png")
 PLAYER1_IMG = join(CUR_DIR,"sprites","redbird-downflap.png")
 PLAYER2_IMG = join(CUR_DIR,"sprites","redbird-midflap.png")
 PLAYER3_IMG = join(CUR_DIR,"sprites","redbird-upflap.png")
 FLAP_SOUND_PATH = join(CUR_DIR,"audio","wing.wav")
 PLY_HIT_SOUND_PATH = join(CUR_DIR,"audio","hit.wav")
+COIN_SOUND_PATH = join(CUR_DIR,"audio","point.wav")
+FONT_FILE_PATH = join(CUR_DIR,"04B_19.TTF")
 
 class Player:
     def __init__(self):
@@ -66,8 +71,9 @@ class Pipes:
             if bird.colliderect(pipe):
                 ply_hit_sound.play()
                 return False
-            elif bird.top <= -100 or bird.bottom >= 790:
+            elif bird.top <= -100 or bird.bottom >= 800: #800
                 #print("game_over") 
+                ply_hit_sound.play()
                 return False
         return True
     def move_pipes(self)->list:
@@ -103,36 +109,88 @@ class Background:
         surface.blit(self.floor,(self.floor_x_pos,790))
         surface.blit(self.floor,(self.floor_x_pos+self.floor.get_width(),790)) #0,790 -> correct pos of the base
 
+class Scoreboard:
+    "Handels Scores and Game Over part"
+    def __init__(self):
+        self.game_font = pygame.font.Font(FONT_FILE_PATH,40)
+        self.score,self.high_score = 0,0
+    def update_score(self):
+        if self.score > self.high_score:
+            self.high_score = self.score
+    def score_display(self,game_status,screen,coin_sound = None):
+        if game_status == "main_game":
+            self.score_surface = self.game_font.render(str(int(self.score)),antialias= True, color=(255,255,255))
+            self.score_rect = self.score_surface.get_rect(center = (288,50))
+            screen.blit(self.score_surface,self.score_rect)
+            #coin_sound.play()
+        if game_status == "game_over":
+            #Current_score or score after u die 
+            self.score_surface = self.game_font.render(f"Score: {int(self.score)}",antialias= True, color=(0,0,0))
+            self.score_rect = self.score_surface.get_rect(center = (288,70))
+            screen.blit(self.score_surface,self.score_rect)
+            #GameOver
+            self.game_over_surface = pygame.transform.scale2x(pygame.image.load(GAME_OVER_IMG_PATH))
+            self.game_over_rect = self.game_over_surface.get_rect(center=(285,200))
+            screen.blit(self.game_over_surface,self.game_over_rect)
+            #Try_Again
+            self.try_again_surface = pygame.transform.scale2x((pygame.image.load(TRY_AGAIN_IMG_PATH))).convert_alpha()
+            self.try_again_rect = self.try_again_surface.get_rect(center=(285,450))
+            screen.blit(self.try_again_surface,self.try_again_rect)
+            #High_Score
+            self.score_surface = self.game_font.render(f"High Score: {int(self.high_score)}",antialias= True, color=(0,0,0))
+            self.score_rect = self.score_surface.get_rect(center = (288,700))
+            screen.blit(self.score_surface,self.score_rect)
+
+
 class Game:
     def __init__(self):
         pygame.mixer.pre_init(size = 16)
         pygame.init()
         self.screen = pygame.display.set_mode((576,900))
         self.game_active = True
+        self.score_soundcnt = 100
         self.flap_sound = pygame.mixer.Sound(FLAP_SOUND_PATH)
         self.ply_hit_sound = pygame.mixer.Sound(PLY_HIT_SOUND_PATH)
+        self.coin_sound = pygame.mixer.Sound(COIN_SOUND_PATH)
         self.clock = pygame.time.Clock()
         self.bg = Background()
         self.player = Player()
         self.pipe = Pipes()
+        self.score = Scoreboard()
     def run(self)->None:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     os.kill(os.getpid(),signal.SIGTERM)
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE and self.game_active == True:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1 and self.game_active == True :
                         self.player.bird_movement = 0
                         #for the default game 9 is good for 60fps
                         self.player.bird_movement -= 9 #12 when hard or 10 it's ok to handle it and if the game what to be easy set it to 5-8
-                    if event.key == pygame.K_SPACE and self.game_active == False:
+                        self.flap_sound.play()
+                    if event.button == 1 and self.game_active == False:
                         self.game_active = True
+                        self.score.score = 0
                         self.pipe.pipe_lst.clear()
                         self.player.bird_rect.center = (100,450) #100,512
                         self.player.bird_movement = PLY_MOV
                         #self.player.
-                    self.flap_sound.play()
+                        self.flap_sound.play()
+                if event.type == pygame.KEYDOWN :
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_UP and self.game_active == True:
+                        self.player.bird_movement = 0
+                        #for the default game 9 is good for 60fps
+                        self.player.bird_movement -= 9 #12 when hard or 10 it's ok to handle it and if the game what to be easy set it to 5-8
+                        self.flap_sound.play()
+                    if event.key == pygame.K_SPACE and self.game_active == False:
+                        self.game_active = True
+                        self.score.score = 0
+                        self.pipe.pipe_lst.clear()
+                        self.player.bird_rect.center = (100,450) #100,512
+                        self.player.bird_movement = PLY_MOV
+                        #self.player.
+                        self.flap_sound.play()
                 if event.type == self.pipe.spawnpipe :
                     self.pipe.pipe_lst.extend(self.pipe.create_pipe())
                     #print(self.pipe.pipe_lst)
@@ -158,7 +216,14 @@ class Game:
                 self.player.draw(self.screen)
                 #Checking for collision
                 self.game_active= self.pipe.check_collision(self.player.bird_rect,self.ply_hit_sound)
-
+                self.score.score+=0.01
+                #add the coin sound
+                self.score.score_display("main_game",self.screen,self.coin_sound)     
+            else:
+                self.score.update_score()
+                self.score.score_display("game_over",screen= self.screen)
+                
+    
             #floor
             self.bg.draw_floor(self.screen)
 
