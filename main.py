@@ -148,6 +148,7 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode((576,900))
         self.game_active = True
+        self.main_menu_status = True
         self.score_soundcnt = 100
         self.flap_sound = pygame.mixer.Sound(FLAP_SOUND_PATH)
         self.ply_hit_sound = pygame.mixer.Sound(PLY_HIT_SOUND_PATH)
@@ -164,7 +165,8 @@ class Game:
                     pygame.quit()
                     os.kill(os.getpid(),signal.SIGTERM)
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1 and self.game_active == True :
+                    if event.button == 1 and self.game_active == True:
+
                         self.player.bird_movement = 0
                         #for the default game 9 is good for 60fps
                         self.player.bird_movement -= 9 #12 when hard or 10 it's ok to handle it and if the game what to be easy set it to 5-8
@@ -217,6 +219,10 @@ class Game:
                 #Checking for collision
                 self.game_active= self.pipe.check_collision(self.player.bird_rect,self.ply_hit_sound)
                 self.score.score+=0.01
+                self.score_soundcnt -= 1
+                if self.score_soundcnt <= 0:
+                    self.coin_sound.play()
+                    self.score_soundcnt = 100
                 #add the coin sound
                 self.score.score_display("main_game",self.screen,self.coin_sound)     
             else:
