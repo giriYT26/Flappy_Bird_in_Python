@@ -16,6 +16,8 @@ OBS_IMG = join(CUR_DIR,"sprites","pipe-green.png")
 PLAYER1_IMG = join(CUR_DIR,"sprites","redbird-downflap.png")
 PLAYER2_IMG = join(CUR_DIR,"sprites","redbird-midflap.png")
 PLAYER3_IMG = join(CUR_DIR,"sprites","redbird-upflap.png")
+FLAP_SOUND_PATH = join(CUR_DIR,"audio","wing.wav")
+PLY_HIT_SOUND_PATH = join(CUR_DIR,"audio","hit.wav")
 
 class Player:
     def __init__(self):
@@ -59,12 +61,13 @@ class Pipes:
         self.bottom_pipe = self.pipe_surface.get_rect(midtop=(700,random_pipe_height)) #700,512
         self.top_pipe = self.pipe_surface.get_rect(midbottom=(700,random_pipe_height-300))
         return self.bottom_pipe,self.top_pipe
-    def check_collision(self,bird):
+    def check_collision(self,bird,ply_hit_sound):
         for pipe in self.pipe_lst:
             if bird.colliderect(pipe):
+                ply_hit_sound.play()
                 return False
             elif bird.top <= -100 or bird.bottom >= 790:
-                print("game_over") 
+                #print("game_over") 
                 return False
         return True
     def move_pipes(self)->list:
@@ -102,9 +105,12 @@ class Background:
 
 class Game:
     def __init__(self):
+        pygame.mixer.pre_init(size = 16)
         pygame.init()
         self.screen = pygame.display.set_mode((576,900))
         self.game_active = True
+        self.flap_sound = pygame.mixer.Sound(FLAP_SOUND_PATH)
+        self.ply_hit_sound = pygame.mixer.Sound(PLY_HIT_SOUND_PATH)
         self.clock = pygame.time.Clock()
         self.bg = Background()
         self.player = Player()
@@ -126,7 +132,7 @@ class Game:
                         self.player.bird_rect.center = (100,450) #100,512
                         self.player.bird_movement = PLY_MOV
                         #self.player.
-
+                    self.flap_sound.play()
                 if event.type == self.pipe.spawnpipe :
                     self.pipe.pipe_lst.extend(self.pipe.create_pipe())
                     #print(self.pipe.pipe_lst)
@@ -151,7 +157,7 @@ class Game:
                 self.player.update()
                 self.player.draw(self.screen)
                 #Checking for collision
-                self.game_active= self.pipe.check_collision(self.player.bird_rect)
+                self.game_active= self.pipe.check_collision(self.player.bird_rect,self.ply_hit_sound)
 
             #floor
             self.bg.draw_floor(self.screen)
